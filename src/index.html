@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOps Assignment App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .status {
+            background-color: #e8f5e8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .version {
+            background-color: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 DevOps Assignment Application</h1>
+        <div class="status">
+            <h3>✅ Application Status: Running</h3>
+            <p>This application demonstrates the complete DevOps pipeline including:</p>
+            <ul>
+                <li>Source Code Management (GitHub)</li>
+                <li>Continuous Integration (Jenkins)</li>
+                <li>Performance Testing (JMeter)</li>
+                <li>Containerization (Docker)</li>
+                <li>Project Management (Jira)</li>
+            </ul>
+        </div>
+        <div class="version">
+            <strong>Version: 1.0.0</strong> | <strong>Build: Jenkins-{{ BUILD_NUMBER }}</strong>
+        </div>
+        <div class="status">
+            <h3>🔗 Integration Points</h3>
+            <p><strong>Jira Issue:</strong> {{ JIRA_ISSUE }}</p>
+            <p><strong>Git Commit:</strong> {{ GIT_COMMIT }}</p>
+            <p><strong>Build Date:</strong> {{ BUILD_DATE }}</p>
+        </div>
+    </div>
+</body>
+</html>

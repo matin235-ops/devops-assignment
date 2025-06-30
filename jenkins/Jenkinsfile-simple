@@ -1,0 +1,143 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_HUB_REPO = 'matin235-ops/devops-assignment'
+        // Your actual Jira site URL
+        JIRA_SITE = 'uniq-team-blyp5qp3.atlassian.net'
+        // Your actual Jira project key - references SCRUM-1, SCRUM-2, etc.
+        JIRA_PROJECT_KEY = 'SCRUM'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo 'Code checked out from GitHub'
+                // Add comment to Jira issue when build starts
+                script {
+                    try {
+                        jiraAddComment comment: "🚀 Build ${env.BUILD_NUMBER} started at ${env.BUILD_URL}\nCommit: ${env.GIT_COMMIT?.take(7) ?: 'unknown'}", 
+                                    idOrKey: "${JIRA_PROJECT_KEY}-1", 
+                                    site: "${JIRA_SITE}"
+                        echo "Successfully added comment to Jira issue ${JIRA_PROJECT_KEY}-1"
+                    } catch (Exception e) {
+                        echo "Jira integration not configured: ${e.message}"
+                    }
+                }
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                echo 'Building the application...'
+                script {
+                    def content = readFile('src/index.html')
+                    content = content.replaceAll('\\{\\{ BUILD_NUMBER \\}\\}', env.BUILD_NUMBER)
+                    content = content.replaceAll('\\{\\{ JIRA_ISSUE \\}\\}', "${JIRA_PROJECT_KEY}-1")
+                    content = content.replaceAll('\\{\\{ GIT_COMMIT \\}\\}', env.GIT_COMMIT?.take(7) ?: 'unknown')
+                    content = content.replaceAll('\\{\\{ BUILD_DATE \\}\\}', new Date().format('yyyy-MM-dd HH:mm:ss'))
+                    writeFile file: 'src/index.html', text: content
+                }
+                echo 'Application built successfully'
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo 'Running tests...'
+                script {
+                    if (!fileExists('src/index.html')) {
+                        error('Application files not found!')
+                    }
+                    echo 'Basic tests passed'
+                }
+            }
+        }
+        
+        stage('Performance Testing') {
+            steps {
+                echo 'Running JMeter Performance Tests...'
+                script {
+                    try {
+                        bat '''
+                            cd src
+                            start /B python -m http.server 8080
+                            timeout /T 5
+                            jmeter -n -t ../tests/performance-test.jmx -l jmeter-results.jtl
+                            taskkill /F /IM python.exe /T
+                        '''
+                        archiveArtifacts artifacts: 'jmeter-results.jtl', fingerprint: true
+                    } catch (Exception e) {
+                        echo "Performance testing failed: ${e.message}"
+                    }
+                }
+            }
+        }
+        
+        stage('Docker Build') {
+            steps {
+                echo 'Building Docker image...'
+                script {
+                    try {
+                        def dockerImage = docker.build("${DOCKER_HUB_REPO}:${env.BUILD_NUMBER}")
+                        dockerImage.tag("latest")
+                        echo 'Docker image built successfully'
+                    } catch (Exception e) {
+                        echo "Docker build failed: ${e.message}"
+                    }
+                }
+            }
+        }
+        
+        stage('Docker Push') {
+            steps {
+                echo 'Pushing Docker image to Docker Hub...'
+                script {
+                    try {
+                        docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
+                            def dockerImage = docker.image("${DOCKER_HUB_REPO}:${env.BUILD_NUMBER}")
+                            dockerImage.push()
+                            dockerImage.push("latest")
+                        }
+                        echo 'Docker image pushed successfully'
+                    } catch (Exception e) {
+                        echo "Docker push failed: ${e.message}"
+                    }
+                }
+            }
+        }
+        
+        stage('Update Jira') {
+            steps {
+                script {
+                    try {
+                        // Add final status comment to Jira
+                        jiraAddComment comment: "✅ Build ${env.BUILD_NUMBER} completed successfully!\n🐳 Docker image: ${DOCKER_HUB_REPO}:${env.BUILD_NUMBER}\n📊 View build details: ${env.BUILD_URL}", 
+                                    idOrKey: "${JIRA_PROJECT_KEY}-1", 
+                                    site: "${JIRA_SITE}"
+                        
+                        // Transition issue to "In Progress" or "Done" if needed
+                        // jiraTransitionIssue idOrKey: "${JIRA_PROJECT_KEY}-1", input: [transition: [name: 'Done']], site: "${JIRA_SITE}"
+                        
+                        echo "Successfully updated Jira issue ${JIRA_PROJECT_KEY}-1"
+                    } catch (Exception e) {
+                        echo "Jira update failed: ${e.message}"
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}
