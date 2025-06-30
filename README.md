@@ -1,4 +1,4 @@
-# DevOps Assignment Project
+# DevOpsss Assignment Project
 
 This project demonstrates a complete DevOps pipeline setup with:
 - Jira for project management
