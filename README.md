@@ -1,4 +1,4 @@
-# DevOps Assignment Project
+# DevOps Assignment Project for Softwrae constraction
 
 This project demonstrates a complete DevOps pipeline setup with:
 - Jira for project management
