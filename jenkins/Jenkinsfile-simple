@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_HUB_REPO = 'matin235-ops/devops-assignment'
+        DOCKER_HUB_REPO = 'matinkhaled23/devops-assignment'
         // Your actual Jira site URL
         JIRA_SITE = 'uniq-team-blyp5qp3.atlassian.net'
         // Your actual Jira project key - references SCRUM-1, SCRUM-2, etc.
